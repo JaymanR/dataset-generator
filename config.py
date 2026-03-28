@@ -1,61 +1,66 @@
-import os
 from enum import Enum
-from pydantic import BaseModel, Field
+import os
+from openai import OpenAI
 from dotenv import load_dotenv
+from pydantic import BaseModel
 
 load_dotenv()
 
-# Enums
 
-class BackendType(str, Enum):
-    LOCAL = "local"
+class APIProvider(str, Enum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
-    HF_API = "hf_api"
-    
-class DeviceType(str, Enum):
-    CPU = "cpu"
-    CUDA = "cuda"
-    MPS = "mps"
-    
-class GenerationConfig(BaseModel):
-    """Parameters to configure LLM output"""
-    
-    temperature: float = Field(default=0.9, ge=0.0, le=2.0)
-    max_new_tokens: int = Field(default=512, ge=64, le=4096)
-    batch_size: int = Field(default=5, ge=1, le=50)
-    total_records: int = Field(default=20, ge=1, le=10_000)
-    top_p: float = Field(default=0.95, ge=0.0, le=1.0)
-    
-class LocalModelConfig(BaseModel):
-    """Settings for running a local HF model."""
-    
-    model_id: str = "google/gemma-3-270m-it"
-    device: DeviceType = DeviceType.CPU
-    load_in_8bit: bool = False
-    load_in_4bit: bool = False
-    
-class APIConfig(BaseModel):
-    """Settings for external API backends."""
-    
-    openai_api_key: str = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""))
-    anthropic_api_key: str = Field(default_factory=lambda: os.getenv("ANTHROPIC_API_KEY", ""))
-    hf_api_token: str = Field(default_factory=lambda: os.getenv("HF_API_TOKEN", ""))
- 
-    # Model names used per API
-    openai_model: str = "gpt-4o-mini"
-    anthropic_model: str = "claude-haiku-4-5-20251001"
-    hf_inference_model: str = "mistralai/Mistral-7B-Instruct-v0.2"
-    
-class ExportConfig(BaseModel):
-    output_dir: str = "outputs"
-    default_filename: str = "dataset"
-    
-class AppConfig(BaseModel):
-    backend: BackendType = BackendType.OPENAI
-    generation: GenerationConfig = Field(default_factory=GenerationConfig)
-    local_model: LocalModelConfig = Field(default_factory=LocalModelConfig)
-    api: APIConfig = Field(default_factory=APIConfig)
-    export: ExportConfig = Field(default_factory=ExportConfig)
-    
-config = AppConfig()
+    GOOGLE = "google"
+    HUGGINGFACE = "huggingface"
+
+
+class APIModelConfig(BaseModel):
+    provider: APIProvider
+    model_id: str
+
+
+# OpenAI
+GPT_5_NANO = APIModelConfig(provider=APIProvider.OPENAI, model_id="gpt-5-nano")
+GPT_5_4_MINI = APIModelConfig(provider=APIProvider.OPENAI, model_id="gpt-5.4-mini")
+
+# Anthropic
+CLAUDE_HAIKU_4_5 = APIModelConfig(
+    provider=APIProvider.ANTHROPIC, model_id="claude-haiku-4-5"
+)
+
+# Google
+GEMINI_2_5_FLASH_LITE = APIModelConfig(
+    provider=APIProvider.GOOGLE, model_id="gemini-2.5-flash-lite"
+)
+
+# HuggingFace Serverless
+QWEN3_8B = APIModelConfig(provider=APIProvider.HUGGINGFACE, model_id="Qwen/Qwen3-8B")
+QWEN3_4B = APIModelConfig(provider=APIProvider.HUGGINGFACE, model_id="Qwen/Qwen3-4B")
+
+
+def initialize_clients():
+    """Initialize and return clients"""
+
+    anthropic_url = "https://api.anthropic.com/v1/"
+    gemini_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
+
+    openai_key = os.getenv("OPENAI_API_KEY")
+    anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+    google_key = os.getenv("GOOGLE_API_KEY")
+
+    clients = {}
+
+    if openai_key:
+        clients["openai"] = OpenAI(api_key=openai_key)
+    else:
+        raise ValueError("OPENAI_API_KEY NOT SET")
+    if anthropic_key:
+        clients["anthropic"] = OpenAI(api_key=anthropic_key, base_url=anthropic_url)
+    else:
+        raise ValueError("ANTHROPIC_API_KEY NOT SET")
+    if google_key:
+        clients["google"] = OpenAI(api_key=google_key, base_url=gemini_url)
+    else:
+        raise ValueError("GOOGLE_API_KEY NOT SET")
+
+    return clients

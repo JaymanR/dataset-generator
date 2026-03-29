@@ -18,24 +18,30 @@ class APIModelConfig(BaseModel):
     provider: APIProvider
     model_id: str
 
+class Models:
+    """Model presets."""
 
-# OpenAI
-GPT_5_NANO = APIModelConfig(provider=APIProvider.OPENAI, model_id="gpt-5-nano")
-GPT_5_4_MINI = APIModelConfig(provider=APIProvider.OPENAI, model_id="gpt-5.4-mini")
+    # OpenAI
+    GPT_5_NANO = APIModelConfig(provider=APIProvider.OPENAI, model_id="gpt-5-nano")
+    GPT_5_4_MINI = APIModelConfig(provider=APIProvider.OPENAI, model_id="gpt-5.4-mini")
 
-# Anthropic
-CLAUDE_HAIKU_4_5 = APIModelConfig(
-    provider=APIProvider.ANTHROPIC, model_id="claude-haiku-4-5"
-)
+    # Anthropic
+    CLAUDE_HAIKU_4_5 = APIModelConfig(
+        provider=APIProvider.ANTHROPIC, model_id="claude-haiku-4-5"
+    )
 
-# Google
-GEMINI_2_5_FLASH_LITE = APIModelConfig(
-    provider=APIProvider.GOOGLE, model_id="gemini-2.5-flash-lite"
-)
+    # Google
+    GEMINI_2_5_FLASH_LITE = APIModelConfig(
+        provider=APIProvider.GOOGLE, model_id="gemini-2.5-flash-lite"
+    )
 
-# HuggingFace Serverless
-QWEN3_8B = APIModelConfig(provider=APIProvider.HUGGINGFACE, model_id="Qwen/Qwen3-8B")
-QWEN3_4B = APIModelConfig(provider=APIProvider.HUGGINGFACE, model_id="Qwen/Qwen3-4B")
+    # HuggingFace Serverless
+    QWEN3_8B = APIModelConfig(
+        provider=APIProvider.HUGGINGFACE, model_id="Qwen/Qwen3-8B"
+    )
+    QWEN3_4B = APIModelConfig(
+        provider=APIProvider.HUGGINGFACE, model_id="Qwen/Qwen3-4B"
+    )
 
 
 def initialize_clients():

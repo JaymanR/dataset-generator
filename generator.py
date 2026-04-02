@@ -1,4 +1,4 @@
-from config import APIModelConfig, APIProvider, initialize_clients
+from config import APIModelConfig, initialize_client
 
 SYSTEM_PROMPT = """
 You are a synthetic dataset generator.
@@ -19,9 +19,7 @@ def generate(
     Generate {num_records} records as a JSON array.
     """
     
-    clients = initialize_clients()
-    
-    client = clients[model_config.provider.value]
+    client = initialize_client(model_config)
     response = client.chat.completions.create(
         model = model_config.model_id,
         messages = [

@@ -56,6 +56,19 @@ python app.py
 
 Then open the local URL printed in the terminal (e.g. `http://127.0.0.1:7860`).
 
+## Deploying To Hugging Face Spaces
+
+This repo includes a `requirements.txt` file for Spaces so the runtime installs the Python packages it needs.
+
+Add provider credentials in your Space under **Settings -> Variables and secrets**:
+
+- `OPENAI_API_KEY` for OpenAI models
+- `ANTHROPIC_API_KEY` for Anthropic models
+- `GOOGLE_API_KEY` for Gemini models
+- `HF_TOKEN` or `HUGGINGFACE_API_KEY` for Hugging Face router models
+
+Only the key for the model you select is required at generation time.
+
 ## Usage
 
 1. Select a model from the dropdown.

@@ -1,8 +1,9 @@
+from dataclasses import dataclass
 from enum import Enum
 import os
-from openai import OpenAI
+
 from dotenv import load_dotenv
-from pydantic import BaseModel
+from openai import OpenAI
 
 load_dotenv()
 
@@ -14,7 +15,8 @@ class APIProvider(str, Enum):
     HUGGINGFACE = "huggingface"
 
 
-class APIModelConfig(BaseModel):
+@dataclass(frozen=True)
+class APIModelConfig:
     provider: APIProvider
     model_id: str
 
@@ -44,29 +46,35 @@ class Models:
     )
 
 
-def initialize_clients():
-    """Initialize and return clients"""
+def initialize_client(model_config: APIModelConfig) -> OpenAI:
+    """Create an API client for the selected provider only."""
 
     anthropic_url = "https://api.anthropic.com/v1/"
     gemini_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
+    huggingface_url = "https://router.huggingface.co/v1"
 
-    openai_key = os.getenv("OPENAI_API_KEY")
-    anthropic_key = os.getenv("ANTHROPIC_API_KEY")
-    google_key = os.getenv("GOOGLE_API_KEY")
+    if model_config.provider == APIProvider.OPENAI:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY is not set")
+        return OpenAI(api_key=api_key)
 
-    clients = {}
+    if model_config.provider == APIProvider.ANTHROPIC:
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise ValueError("ANTHROPIC_API_KEY is not set")
+        return OpenAI(api_key=api_key, base_url=anthropic_url)
 
-    if openai_key:
-        clients["openai"] = OpenAI(api_key=openai_key)
-    else:
-        raise ValueError("OPENAI_API_KEY NOT SET")
-    if anthropic_key:
-        clients["anthropic"] = OpenAI(api_key=anthropic_key, base_url=anthropic_url)
-    else:
-        raise ValueError("ANTHROPIC_API_KEY NOT SET")
-    if google_key:
-        clients["google"] = OpenAI(api_key=google_key, base_url=gemini_url)
-    else:
-        raise ValueError("GOOGLE_API_KEY NOT SET")
+    if model_config.provider == APIProvider.GOOGLE:
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            raise ValueError("GOOGLE_API_KEY is not set")
+        return OpenAI(api_key=api_key, base_url=gemini_url)
 
-    return clients
+    if model_config.provider == APIProvider.HUGGINGFACE:
+        api_key = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_API_KEY")
+        if not api_key:
+            raise ValueError("HF_TOKEN or HUGGINGFACE_API_KEY is not set")
+        return OpenAI(api_key=api_key, base_url=huggingface_url)
+
+    raise ValueError(f"Unsupported provider: {model_config.provider}")
